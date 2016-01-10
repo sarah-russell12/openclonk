@@ -80,13 +80,7 @@ namespace
 		}
 	}
 
-#ifdef GLDEBUGPROCARB_USERPARAM_IS_CONST
-#define USERPARAM_CONST const
-#else
-#define USERPARAM_CONST
-#endif
-
-	void GLAPIENTRY OpenGLDebugProc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* message, USERPARAM_CONST void* userParam)
+	void GLAPIENTRY OpenGLDebugProc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* message, const void* userParam)
 	{
 		const char *msg_source = MsgSourceToStr(source);
 		const char *msg_type = MsgTypeToStr(type);
@@ -99,8 +93,6 @@ namespace
 #endif
 	}
 }
-
-#undef USERPARAM_CONST
 
 CStdGL::CStdGL():
 	pMainCtx(0), CurrentVBO(0), NextVAOID(VAOIDs.end())
@@ -289,13 +281,13 @@ CStdGLCtx *CStdGL::CreateContext(C4Window * pWindow, C4AbstractApp *pApp)
 		Log("  gl: Create first context...");
 	}
 	bool success = pCtx->Init(pWindow, pApp);
-	if (Config.Graphics.DebugOpenGL && glDebugMessageCallbackARB)
+	if (Config.Graphics.DebugOpenGL && glDebugMessageCallback)
 	{
 		if (first_ctx) Log("  gl: Setting OpenGLDebugProc callback");
-		glDebugMessageCallbackARB(&OpenGLDebugProc, nullptr);
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+		glDebugMessageCallback(&OpenGLDebugProc, nullptr);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 #ifdef GL_KHR_debug
-		if (GLEW_KHR_debug)
+		if (epoxy_has_gl_extension("GL_KHR_debug"))
 			glEnable(GL_DEBUG_OUTPUT);
 #endif
 	}
