@@ -42,7 +42,7 @@
 #ifdef USE_X11
 #include <gdk/gdkx.h>
 #include <X11/Xlib.h>
-#include <GL/glx.h>
+#include <epoxy/glx.h>
 #endif
 
 #include "C4AppGTKImpl.h"

@@ -24,7 +24,7 @@
 #include <C4windowswrapper.h>
 #endif
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 
 #ifdef USE_COCOA
 #import "ObjectiveCAssociated.h"
@@ -131,7 +131,6 @@ protected:
 	static HGLRC hrc;                  // rendering context
 	HWND hWindow; // used if pWindow==NULL
 	HDC hDC;                    // device context handle
-	static bool InitGlew(HINSTANCE hInst);
 #elif defined(USE_X11)
 	/*GLXContext*/void * ctx;
 #endif
