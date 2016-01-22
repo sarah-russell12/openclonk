@@ -26,7 +26,11 @@ public:
 	}
 
 	GMainContext *context;
+#ifdef STDSCHEDULER_USE_EVENTS
+	std::vector<GPollFD> fds;
+#else
 	std::vector<pollfd> fds;
+#endif
 	C4TimeMilliseconds query_time;
 	int timeout;
 	int max_priority;
@@ -90,11 +94,18 @@ public:
 	}
 
 	// StdSchedulerProc override
+#ifdef STDSCHEDULER_USE_EVENTS
+	virtual HANDLE GetEvent()
+	{
+		return reinterpret_cast<HANDLE>(fds[0].fd);
+	}
+#else
 	virtual void GetFDs(std::vector<struct pollfd> & rfds)
 	{
 		if (query_time.IsInfinite()) query(C4TimeMilliseconds::Now());
 		rfds.insert(rfds.end(), fds.begin(), fds.end());
 	}
+#endif
 	virtual C4TimeMilliseconds GetNextTick(C4TimeMilliseconds Now)
 	{
 		query(Now);

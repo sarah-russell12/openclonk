@@ -109,7 +109,7 @@ public:
 
 	void Clear();               // clear objects
 
-#ifdef USE_WIN32_WINDOWS
+#if defined(USE_WIN32_WINDOWS) || (defined(_WIN32) && defined(USE_GTK))
 	std::vector<int> EnumerateMultiSamples() const;
 #endif
 	bool Init(C4Window * pWindow, C4AbstractApp *pApp);
@@ -125,7 +125,7 @@ protected:
 	void SelectCommon();
 	// this handles are declared as pointers to structs
 	C4Window * pWindow; // window to draw in
-#ifdef USE_WIN32_WINDOWS
+#if defined(USE_WIN32_WINDOWS) || (defined(_WIN32) && defined(USE_GTK))
 	static HGLRC hrc;                  // rendering context
 	HWND hWindow; // used if pWindow==NULL
 	HDC hDC;                    // device context handle

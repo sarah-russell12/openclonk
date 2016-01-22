@@ -27,14 +27,7 @@
 #include <pthread.h>
 #endif
 
-#if defined(USE_GTK)
-// from X.h:
-//#define ShiftMask   (1<<0)
-//#define ControlMask   (1<<2)
-#define MK_CONTROL (1<<2)
-#define MK_SHIFT (1<<0)
-#define MK_ALT (1<<3)
-#elif defined(USE_SDL_MAINLOOP)
+#if defined(USE_SDL_MAINLOOP)
 #include <SDL.h>
 #define MK_SHIFT (KMOD_LSHIFT | KMOD_RSHIFT)
 #define MK_CONTROL (KMOD_LCTRL | KMOD_RCTRL)
@@ -50,11 +43,18 @@
 extern int MK_SHIFT;
 extern int MK_CONTROL;
 extern int MK_ALT;
-#elif defined(USE_WIN32_WINDOWS)
+#elif defined(USE_WIN32_WINDOWS) || defined(_WIN32)
 #include <C4windowswrapper.h>
 #ifndef MK_ALT
 #define MK_ALT 0x20 // as defined in oleidl.h
 #endif
+#elif defined(USE_GTK)
+// from X.h:
+//#define ShiftMask   (1<<0)
+//#define ControlMask   (1<<2)
+#define MK_CONTROL (1<<2)
+#define MK_SHIFT (1<<0)
+#define MK_ALT (1<<3)
 #endif
 
 #ifdef USE_WIN32_WINDOWS

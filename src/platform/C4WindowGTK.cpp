@@ -114,6 +114,9 @@ GLXFBConfig PickGLXFBConfig(Display* dpy, int multisampling)
 	return config;
 }
 }
+#elif defined(GDK_WINDOWING_WIN32)
+#include <C4windowswrapper.h>
+#include <gdk/gdkwin32.h>
 #endif // GDK_WINDOWING_X11
 
 static void OnDestroyStatic(GtkWidget* widget, gpointer data)
@@ -575,6 +578,9 @@ void C4Window::EnumerateMultiSamples(std::vector<int>& samples) const
 
 	XFree(configs);
 	samples.assign(multisamples.cbegin(), multisamples.cend());
+#else
+	if(pGL && pGL->pMainCtx)
+		samples = pGL->pMainCtx->EnumerateMultiSamples();
 #endif
 }
 
@@ -774,6 +780,8 @@ C4Window* C4Window::Init(WindowKind windowKind, C4AbstractApp * pApp, const char
 
 #ifdef GDK_WINDOWING_X11
 	renderwnd = GDK_WINDOW_XID(render_gdk_wnd);
+#elif defined(GDK_WINDOWING_WIN32)
+	renderwnd = reinterpret_cast<HWND>(gdk_win32_window_get_handle(render_gdk_wnd));
 #endif
 	// Make sure the window is shown and ready to be rendered into,
 	// this avoids an async X error.

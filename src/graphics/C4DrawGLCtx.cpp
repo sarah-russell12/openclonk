@@ -66,7 +66,7 @@ void CStdGLCtx::Reinitialize()
 }
 
 
-#ifdef USE_WIN32_WINDOWS
+#if defined(USE_WIN32_WINDOWS) || (defined(_WIN32) && defined(USE_GTK))
 
 #include <epoxy/wgl.h>
 
