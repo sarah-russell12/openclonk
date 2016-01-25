@@ -28,8 +28,8 @@
 
 // ----------- C4StartupNetListEntry -----------------------------------------------------------------------
 
-C4StartupNetListEntry::C4StartupNetListEntry(C4GUI::ListBox *pForListBox, C4GUI::Element *pInsertBefore, C4StartupNetDlg *pNetDlg)
-		: pNetDlg(pNetDlg), pList(pForListBox), pRefClient(NULL), pRef(NULL), fError(false), eQueryType(NRQT_Unknown), iTimeout(0), iInfoIconCount(0), iSortOrder(0), fIsSmall(false), fIsCollapsed(false), fIsEnabled(true), fIsImportant(false)
+C4StartupNetListEntry::C4StartupNetListEntry(C4GUI::ListBox *pForListBox, C4GUI::Element *pInsertBefore, C4StartupNetDlg *pNetDlg, C4Network2Ping *pPing)
+		: pNetDlg(pNetDlg), pPing(pPing), pList(pForListBox), pRefClient(NULL), pRef(NULL), fError(false), eQueryType(NRQT_Unknown), iTimeout(0), iInfoIconCount(0), iSortOrder(0), fIsSmall(false), fIsCollapsed(false), fIsEnabled(true), fIsImportant(false)
 {
 	// calc height
 	int32_t iLineHgt = ::GraphicsResource.TextFont.GetLineHeight(), iHeight = iLineHgt * 2 + 4;
@@ -387,6 +387,7 @@ void C4StartupNetListEntry::SetReference(C4Network2Reference *pRef)
 	// set info
 	this->pRef = pRef;
 	int32_t iIcon = pRef->getIcon();
+	pPing->Ping(pRef->getAddr(0).getAddr());
 	if (!Inside<int32_t>(iIcon, 0, C4StartupScenSel_IconCount-1)) iIcon = C4StartupScenSel_DefaultIcon_Scenario;
 	pIcon->SetFacet(C4Startup::Get()->Graphics.fctScenSelIcons.GetPhase(iIcon));
 	pIcon->SetAnimated(false, 0);
@@ -397,7 +398,7 @@ void C4StartupNetListEntry::SetReference(C4Network2Reference *pRef)
 	sInfoText[1].Format( LoadResStr("IDS_NET_INFOPLRSGOALDESC"),
 	                     (int)iPlrCnt,
 	                     (int)pRef->Parameters.MaxPlayers,
-	                     pRef->getGameGoalString().getData(),
+	                     pRef->Parameters.GetGameGoalString().getData(),
 	                     StdStrBuf(pRef->getGameStatus().getDescription(), true).getData() );
 	if (pRef->getTime() > 0)
 	{
@@ -435,6 +436,11 @@ void C4StartupNetListEntry::SetReference(C4Network2Reference *pRef)
 	}
 	// list participating player names
 	sInfoText[4].Format("%s: %s", LoadResStr("IDS_CTL_PLAYER"), iPlrCnt ? pRef->Parameters.PlayerInfos.GetActivePlayerNames(false).getData() : LoadResStr("IDS_CTL_NONE"));
+	
+	// Ping
+	C4TimeMilliseconds ping = pPing->GetPing(pRef->getAddr(0).getAddr());
+	sInfoText[5].Format("Ping: %s ms", ping.AsString().getData());
+
 	// disabled if join is not possible for some reason
 	C4GameVersion verThis;
 	if (!pRef->isJoinAllowed() || !(pRef->getGameVersion() == verThis))
@@ -495,7 +501,7 @@ C4StartupNetListEntry *C4StartupNetListEntry::AddReference(C4Network2Reference *
 		}
 	}
 	// no update - just add
-	C4StartupNetListEntry *pNewRefEntry = new C4StartupNetListEntry(pList, pInsertBefore, pNetDlg);
+	C4StartupNetListEntry *pNewRefEntry = new C4StartupNetListEntry(pList, pInsertBefore, pNetDlg, pPing);
 	pNewRefEntry->SetReference(pAddRef);
 	pNetDlg->OnReferenceEntryAdd(pNewRefEntry);
 	return pNewRefEntry;
@@ -572,7 +578,7 @@ C4Network2Reference *C4StartupNetListEntry::GrabReference()
 
 // ----------- C4StartupNetDlg ---------------------------------------------------------------------------------
 
-C4StartupNetDlg::C4StartupNetDlg() : C4StartupDlg(LoadResStr("IDS_DLG_NETSTART")), pChatTitleLabel(NULL), pMasterserverClient(NULL), fIsCollapsed(false), fUpdatingList(false), iGameDiscoverInterval(0), tLastRefresh(0), fUpdateCheckPending(false)
+C4StartupNetDlg::C4StartupNetDlg() : C4StartupDlg(LoadResStr("IDS_DLG_NETSTART")), pChatTitleLabel(NULL), pMasterserverClient(NULL), fIsCollapsed(false), fUpdatingList(false), iGameDiscoverInterval(0), tLastRefresh(0), fUpdateCheckPending(false), pingClient()
 {
 	// ctor
 	// key bindings
@@ -851,7 +857,7 @@ void C4StartupNetDlg::UpdateMasterserver()
 	}
 	else
 	{
-		pMasterserverClient = new C4StartupNetListEntry(pGameSelList, NULL, this);
+		pMasterserverClient = new C4StartupNetListEntry(pGameSelList, NULL, this, &pingClient);
 		StdStrBuf strVersion; strVersion.Format("%d.%d", C4XVER1, C4XVER2);
 		StdStrBuf strQuery; strQuery.Format("%s?version=%s&platform=%s", Config.Network.GetLeagueServerAddress(), strVersion.getData(), C4_OS);
 		pMasterserverClient->SetRefQuery(strQuery.getData(), C4StartupNetListEntry::NRQT_Masterserver);
@@ -1184,7 +1190,7 @@ void C4StartupNetDlg::AddReferenceQuery(const char *szAddress, C4StartupNetListE
 		}
 	}
 	// No reference from same host found - create a new entry
-	C4StartupNetListEntry *pEntry = new C4StartupNetListEntry(pGameSelList, NULL, this);
+	C4StartupNetListEntry *pEntry = new C4StartupNetListEntry(pGameSelList, NULL, this, &pingClient);
 	pEntry->SetRefQuery(szAddress, eQueryType);
 	if (eQueryType == C4StartupNetListEntry::NRQT_DirectJoin)
 		pGameSelList->SelectEntry(pEntry, true);

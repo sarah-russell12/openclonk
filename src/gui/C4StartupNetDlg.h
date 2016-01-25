@@ -21,6 +21,7 @@
 #include "C4Startup.h"
 #include "C4Network2Discover.h"
 #include "C4Network2Reference.h"
+#include "C4Network2Ping.h"
 
 // -----------------------------------------------
 
@@ -35,7 +36,7 @@ const int C4NetMinRefreshInterval = 8; // seconds; minimum time between refreshe
 class C4StartupNetListEntry : public C4GUI::Window
 {
 public:
-	C4StartupNetListEntry(C4GUI::ListBox *pForListBox, C4GUI::Element *pInsertBefore, class C4StartupNetDlg *pNetDlg);
+	C4StartupNetListEntry(C4GUI::ListBox *pForListBox, C4GUI::Element *pInsertBefore, class C4StartupNetDlg *pNetDlg, C4Network2Ping *pPing);
 	~C4StartupNetListEntry();
 
 	enum QueryType // where the game ref is coming from
@@ -53,7 +54,7 @@ public:
 		TT_Masterserver // C4NetMasterServerQueryInterval
 	};
 
-	enum { InfoLabelCount=5, MaxInfoIconCount=10 };
+	enum { InfoLabelCount=6, MaxInfoIconCount=10 };
 
 private:
 	C4StartupNetDlg *pNetDlg;
@@ -61,6 +62,7 @@ private:
 	StdStrBuf sRefClientAddress;      // set during reference retrieval: reference server address
 	C4Network2RefClient *pRefClient; // set during reference retrieval: reference request client
 	C4Network2Reference *pRef;       // set for retrieved references
+	C4Network2Ping *pPing;			// for retreiving ping measurements
 	
 	bool fError;                     // if set, the label was changed to an error message and no more updates are done
 	StdStrBuf sError;
@@ -153,6 +155,7 @@ private:
 	int iGameDiscoverInterval;                 // next time until a game discovery is started
 	time_t tLastRefresh;                       // time of last refresh
 
+	C4Network2Ping pingClient;					// For taking ping measurments
 
 protected:
 	virtual bool HasBackground() { return false; }
